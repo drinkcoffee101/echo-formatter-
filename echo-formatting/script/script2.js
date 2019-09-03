@@ -71,45 +71,56 @@ let plateArea = () => {
     plate.append(container);
 }
 
-let columnsAndRows = (container, plateNumber) => {
+//generate columns and rows for each plate 
+let columnsAndRows = (container, plateNumber, col, row) => {
 
-        //generate the column labels
-        columns.forEach(col => {
-            //create a new div element 
-            var newDiv = $('<div>');
-            newDiv.addClass('label');
-            //add column identifier 
-            newDiv.addClass('_' + col);
-            //set column 00 to blank as the space is needed for formatting 
-            if (col == '00') {
-                newDiv.text('');
-            }
-            else {
-                newDiv.text(col);
-            }
-    
-            container.append(newDiv);
-        });
-    
-        //generate the rows
-        rows.forEach(row => {
-            //row header 
-            var rowLetter = $('<div>');
-            rowLetter.addClass('label a');
-            rowLetter.text(row);
-    
-            container.append(rowLetter);
-    
-            //create 12 wells per 'row' 
-            for (let i = 1; i < columns.length; i++) {
-                var well = $('<button>');
-                well.addClass(row + ' well _' + columns[i]);
-                well.attr('id', row + i + 'P' + plateNumber);
-                well.text(row + i);
-                container.append(well);
-            }
-        });
+    //generate the column labels
+    col.forEach(col => {
+        //create a new div element 
+        var newDiv = $('<div>');
+        newDiv.addClass('label');
+        //add column identifier 
+        newDiv.addClass('_' + col);
+        //set column 00 to blank as the space is needed for formatting 
+        if (col == '00') {
+            newDiv.text('');
+        }
+        else {
+            newDiv.text(col);
+        }
+        container.append(newDiv);
+    });
+    //generate the rows
+    row.forEach(row => {
+        //row header 
+        var rowLetter = $('<div>');
+        rowLetter.addClass('label a');
+        rowLetter.text(row);
+
+        container.append(rowLetter);
+        //create 12 wells per 'row' 
+        for (let i = 1; i < columns.length; i++) {
+            var well = $('<button>');
+            well.addClass(row + ' well _' + columns[i]);
+            well.attr('id', row + i + 'P' + plateNumber);
+            well.text(row + i);
+            container.append(well);
+            console.log(i);
+        }
+    });
 }
+
+//
+let cutArrayTo96 = (is384) => {
+    //if not a 384 plate, cut the array down to represent a 96well plate 
+    if (is384 === false) {
+        var slicedCol = columns.slice(0, 13);
+        var slicedRows = rows.slice(0, 8);
+        return {slicedCol, slicedRows};
+    }
+}
+
+// console.log(cutArrayTo96(false));
 
 //funciton that dynamically creates a 96well plate
 let generatePlate = (is384, plateNumber) => {
@@ -118,8 +129,6 @@ let generatePlate = (is384, plateNumber) => {
     var plateview = $('<div class="plateview">');
     var plate = $('<div class="plate">');
     var container = $('<div class="container item" id="plate-area">');
-
-
     /*=============================================
     =            Build new plate area            =
     =============================================*/
@@ -141,67 +150,21 @@ let generatePlate = (is384, plateNumber) => {
     rowFor96.append(divider);
     rowFor96.append(plate_3_96);
     rowFor96.append(plate_4_96);
-
-
     /*=====  End of Build new plate area  ======*/
-
     $(divFor384).append(viewport);
 
     viewport.append(plateview);
     plateview.append(plate);
     plate.append(container);
 
-
-    ////////
-
-    ///////
-
-    //if not a 384 plate, cut the array down to represent a 96well plate 
+    // cutArrayTo96(is384);
     if (is384 === false) {
         columns = columns.slice(0, 13);
         rows = rows.slice(0, 8);
+        // return {slicedCol, slicedRows};
     }
 
-
-    columnsAndRows(container, plateNumber);
-
-    // //generate the column labels
-    // columns.forEach(col => {
-    //     //create a new div element 
-    //     var newDiv = $('<div>');
-    //     newDiv.addClass('label');
-    //     //add column identifier 
-    //     newDiv.addClass('_' + col);
-    //     //set column 00 to blank as the space is needed for formatting 
-    //     if (col == '00') {
-    //         newDiv.text('');
-    //     }
-    //     else {
-    //         newDiv.text(col);
-    //     }
-
-    //     $(container).append(newDiv);
-    // });
-
-    // //generate the rows
-    // rows.forEach(row => {
-    //     //row header 
-    //     var rowLetter = $('<div>');
-    //     rowLetter.addClass('label a');
-    //     rowLetter.text(row);
-
-    //     $(container).append(rowLetter);
-
-    //     //create 12 wells per 'row' 
-    //     for (let i = 1; i < columns.length; i++) {
-    //         var well = $('<button>');
-    //         well.addClass(row + ' well _' + columns[i]);
-    //         well.attr('id', row + i + 'P' + plateNumber);
-    //         well.text(row + i);
-    //         $(container).append(well);
-    //     }
-    // });
-
+    columnsAndRows(container, plateNumber, columns, rows);
 }
 
 //function to generate the 4 subsequent plates associated with the 384
@@ -212,6 +175,10 @@ let generate96WellPlates = () => {
     var slicedCol = newColumns.slice(0, 13)
     var newRows = rows;
     var slicedRows = newRows.slice(0, 8);
+
+    // const {slicedCol, slicedRows} = cutArrayTo96(false);
+    // console.log(slicedCol)
+
     //generate plate area divs
     //go through each div with class name plate1 to plate4
     for (let i = 1; i < 5; i++) {
@@ -220,47 +187,51 @@ let generate96WellPlates = () => {
         var plate = $('<div class="plate">');
         var container = $('<div class="container item" id="plate-area">');
 
+        columnsAndRows(container, 1, slicedCol,slicedRows);
         $(`.plate${i}`).append(viewport);
-        //generate the column labels
-        slicedCol.forEach(col => {
-            //create a new div element 
-            var newDiv = $('<div>');
-            newDiv.addClass('label');
-            //add column identifier 
-            newDiv.addClass('_' + col);
-            //set column 00 to blank as the space is needed for formatting 
-            if (col == '00') {
-                newDiv.text('');
-            }
-            else {
-                newDiv.text(col);
-            }
 
-            $(container).append(newDiv);
-        });
+        
+        // //generate the column labels
+        // slicedCol.forEach(col => {
+        //     //create a new div element 
+        //     var newDiv = $('<div>');
+        //     newDiv.addClass('label');
+        //     //add column identifier 
+        //     newDiv.addClass('_' + col);
+        //     //set column 00 to blank as the space is needed for formatting 
+        //     if (col == '00') {
+        //         newDiv.text('');
+        //     }
+        //     else {
+        //         newDiv.text(col);
+        //     }
 
-        //generate the rows
-        slicedRows.forEach(row => {
-            //row header 
-            var rowLetter = $('<div>');
-            rowLetter.addClass('label a');
-            rowLetter.text(row);
+        //     $(container).append(newDiv);
+        // });
 
-            $(container).append(rowLetter);
+        // //generate the rows
+        // slicedRows.forEach(row => {
+        //     //row header 
+        //     var rowLetter = $('<div>');
+        //     rowLetter.addClass('label a');
+        //     rowLetter.text(row);
 
-            //create 12 wells per 'row' 
-            for (let i = 1; i < slicedCol.length; i++) {
-                var well = $('<button>');
-                well.addClass(row + ' well _' + columns[i]);
-                // well.attr('id', row + i + 'P' + plateNumber);
-                well.text(row + i);
-                $(container).append(well);
-            }
-        });
+        //     $(container).append(rowLetter);
+
+        //     //create 12 wells per 'row' 
+        //     for (let i = 1; i < slicedCol.length; i++) {
+        //         var well = $('<button>');
+        //         well.addClass(row + ' well _' + columns[i]);
+        //         // well.attr('id', row + i + 'P' + plateNumber);
+        //         well.text(row + i);
+        //         $(container).append(well);
+        //     }
+        // });
 
         viewport.append(plateview);
         plateview.append(plate);
         plate.append(container);
+        
     }
 }
 
