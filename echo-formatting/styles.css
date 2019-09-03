@@ -1,0 +1,114 @@
+* {
+    user-select: none;
+}
+
+html {
+    font-size: 15px;
+}
+
+body {
+    width: 3000px;
+}
+
+/* a {
+    margin-top: 100px;
+} */
+
+.plateview {
+    float: left;
+}
+
+.plate {
+    display: inline-block;
+    /* width: 38.1rem; */
+    margin: 0.9rem 1.8rem;
+    border: solid 0.9rem #20AA73;
+    border-radius: 0.9rem 0.9rem 0.9rem 0.9rem;
+    padding: 0 0.45rem 0.9rem 0;
+}
+
+.label {
+    width: 2.25rem;
+    height: 2.25rem;
+    line-height: 2.25rem;
+    font-family: monospace;
+    vertical-align: middle;
+    text-align: center;
+    float: left;
+    border: solid 0.09rem rgba(255, 255, 255, 0);
+    margin: 0.15rem;
+}
+
+.label>.info {
+    display: inline-block;
+    -webkit-transform: translate(0rem, -5.5rem) rotate(-35deg);
+    transform: translate(0rem, -5.5rem) rotate(-35deg);
+    white-space: nowrap;
+    text-align: left;
+    vertical-align: top;
+}
+
+.label.A, .label.B, .label.C, .label.D, .label.E, .label.F, .label.G, .label.H, .label.I, .label.J, .label.K, .label.L, .label.M, .label.N, .label.O, .label.P {
+    clear: both;
+}
+
+.A, .B, .C, .D, .E, .F, .G, .H, .I, .J, .K, .L, .M, .N, .O, .P {
+    font-weight: bold;
+}
+
+.well {
+    display: block;
+    height: 2.25rem;
+    width: 2.25rem;
+    line-height: 2.25rem;
+    font-size: 0.9rem;
+    margin: 0.15rem;
+    border: solid 0.09rem #3ab0e2;
+    border-radius: 50%;
+    vertical-align: middle;
+    text-align: center;
+    float: left;
+    background-color: white;
+    color: black;
+}
+
+.well2 {
+    display: block;
+    height: 2.25rem;
+    width: 2.25rem;
+    line-height: 2.25rem;
+    font-size: 0.9rem;
+    margin: 0.15rem;
+    border-radius: 50%;
+    vertical-align: middle;
+    text-align: center;
+    float: left;
+    background-color: white;
+    color: black;
+}
+
+/* .well:hover {
+    background-color: #4CAF50;
+    color: white;
+} */
+
+.clicked {
+    background-color: #4CAF50;
+}
+
+/*=============================================
+=            Navbar            =
+=============================================*/
+
+.title {
+    padding-top: 5px;
+    padding-right: 10px;
+}
+
+/*=====  End of Navbar  ======*/
+
+@media (min-width: 1200px) {
+    .container {
+        max-width: 2500;
+    }
+}
