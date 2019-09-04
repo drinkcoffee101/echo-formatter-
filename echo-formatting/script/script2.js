@@ -260,12 +260,42 @@ let formatArrayIntoLines = (arr) => {
     }
 }
 
-var exampleArray = [["B1", "B2", "B3", "B4", "B5", "B6", "B7", "B8", "B9", "B10", "B11", "B12", "B13", "B14", "B15", "B16", "B17", "B18", "B19", "B20", "B21", "B22", "B23", "B24", "C1", "C2", "C3", "C4", "C5", "C6", "C7", "C8", "C9", "C10", "C11", "C12", "C13", "C14", "C15", "C16", "C17", "C18", "C19", "C20", "C21", "C22", "C23", "C24", "D1", "D2", "D3", "D4", "D5"], ["E1", "E2", "E3", "E4", "E5", "E6", "E7", "E8", "E9", "E10", "E11", "E12", "E13", "E14", "E15", "E16", "E17", "E18", "E19", "E20", "E21", "E22", "E23", "E24", "F1", "F2", "F3", "F4", "F5", "F6", "F7", "F8", "F9", "F10", "F11", "F12", "F13"]];
 let sourceSolutionFormatting = (arr) => {
     //if the legnth of the array is 24 or less, return the 1st and last index of that array
     if (arr.length < 25) return `{${arr[0]}:${arr[arr.length - 1]}}`;
 
     return `{${arr[0]}:${arr[23]}},${sourceSolutionFormatting(arr = arr.slice(24))}`
+}
+//get the total amount of each solution and store the result in an object 
+let solutionTotals = (additives, sizeOfResultsObject, data) => {
+    //used to hold the solution name (key) and the total amount (value)
+    let totalSolution = {};
+    //variables used to iterate 
+    var solutionAmountCount = 3;
+    var solutionNameCount = 1;
+
+    //get the total amount of each solution and store the result in an object 
+    while (solutionAmountCount < additives.length) {
+        var solutionTotal = 0;
+
+        for (var i = 0; i < sizeOfResultsObject - 1; i++) {
+            //for each object in data, turn each object into an array
+            var wellInfo = Object.values(data[i]);
+            //Generate the partial (missing solution source wells) new CSV lines 
+            formatArrayIntoLines(wellInfo);
+            //total values
+            //for example solution 1 will be at index of 1 (now 3) in each array generated 
+            solutionTotal += Number(wellInfo[solutionAmountCount]);
+        }
+        //after totaling, get the name of the solution and add the name and total as a k/v pair to the totalSolution object 
+        solutionName = data[0]['Additive ' + solutionNameCount];
+        //convert from nL to uL
+        totalSolution[solutionName] = solutionTotal / 1000;
+        //each amount will be at an odd index number when in the for loop 
+        solutionAmountCount += 2;
+        solutionNameCount++;
+    }
+    return totalSolution;
 }
 /*=====  End of Functions  ======*/
 
@@ -277,6 +307,8 @@ let sourceSolutionFormatting = (arr) => {
 //callback function 
 let completeFn = (results) => {
 
+    let data = {};
+
     if (results && results.errors) {
         if (results.errors) {
             errorCount = results.errors.length;
@@ -284,6 +316,7 @@ let completeFn = (results) => {
         }
         if (results.data && results.data.length > 0)
             rowCount = results.data.length;
+        data = results.data;
     }
     //check the dropdown menu selection for the size of the plate to generate 
     var is384 = true;
@@ -293,7 +326,7 @@ let completeFn = (results) => {
     }
     //determine how many plates to generate by looking at how many additives there are 
     //since there will always be at least 3 (now 5 //20190826//) items in the array, subtract out the well assignment and divide the result by 2 to give you the number of additives 
-    var additives = Object.keys(results.data[0])
+    var additives = Object.keys(data[0])
     var numberOfPlatesToGenerate = (additives.length - 3) / 2
 
     //need to make a loop to generate X number of plates
@@ -304,38 +337,16 @@ let completeFn = (results) => {
     while (plateNumber <= numberOfPlatesToGenerate) {
         generatePlate(is384, plateNumber);
         generate96WellPlates();
-        highlightWells(results.data, plateNumber);
+        highlightWells(data, plateNumber);
         plateNumber++;
     }
-    //used to hold the solution name (key) and the total amount (value)
-    let totalSolution = {};
-    //variables used to iterate 
-    var solutionAmountCount = 3;
-    var solutionNameCount = 1;
 
-    var sizeOfResultsObject = Object.keys(results.data).length;
-    //get the total amount of each solution and store the result in an object 
-    while (solutionAmountCount < additives.length) {
-        var solutionTotal = 0;
+    var sizeOfResultsObject = Object.keys(data).length;
 
-        for (var i = 0; i < sizeOfResultsObject - 1; i++) {
-            //for each object in data, turn each object into an array
-            var wellInfo = Object.values(results.data[i])
-            //Generate the partial (missing solution source wells) new CSV lines 
-            formatArrayIntoLines(wellInfo);
-            //total values
-            //for example solution 1 will be at index of 1 (now 3) in each array generated 
-            solutionTotal += Number(wellInfo[solutionAmountCount]);
-        }
-        //after totaling, get the name of the solution and add the name and total as a k/v pair to the totalSolution object 
-        solutionName = results.data[0]['Additive ' + solutionNameCount];
-        //convert from nL to uL
-        totalSolution[solutionName] = solutionTotal / 1000;
-        //each amount will be at an odd index number when in the for loop 
-        solutionAmountCount += 2;
-        solutionNameCount++;
-    }
+    const totalSolution = solutionTotals(additives, sizeOfResultsObject, data);
+
     createSolutionPlate(is384, totalSolution, numberOfPlatesToGenerate);
+
     console.log(partialNewLineForEchoWorklist);
 }
 
