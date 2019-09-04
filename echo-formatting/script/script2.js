@@ -10,6 +10,7 @@ let solutionColors = [];
 //example output:
 //['A1','500','Water']
 let partialNewLineForEchoWorklist = [];
+let solutionSourceWellsForEchoWorkList = [];
 
 /*=====  End of Global Variables  ======*/
 
@@ -27,7 +28,6 @@ let getRandomColor = () => {
 
     return 'rgb(' + r + ',' + b + ',' + g + ',' + o + ')';
 }
-
 //this will highlight alls well which were passed a volume above 0
 let highlightWells = (data, plateNumber) => {
 
@@ -43,7 +43,6 @@ let highlightWells = (data, plateNumber) => {
         }
     });
 }
-
 //speifically for the solution source plate but same purpose as highlightWells
 let highlightSolutionPlate = (solutionsArray, plateNumber) => {
     //for each solution/well pair
@@ -57,20 +56,6 @@ let highlightSolutionPlate = (solutionsArray, plateNumber) => {
         $(wellID).css('background-color', e[2]);
     })
 }
-
-let plateArea = () => {
-    var viewport = $('<div id="custom-view">');
-    var plateview = $('<div class="plateview">');
-    var plate = $('<div class="plate">');
-    var container = $('<div class="container item" id="plate-area">');
-
-    $(divFor384).append(viewport);
-
-    viewport.append(plateview);
-    plateview.append(plate);
-    plate.append(container);
-}
-
 //generate columns and rows for each plate 
 let columnsAndRows = (container, plateNumber, col, row) => {
 
@@ -99,29 +84,27 @@ let columnsAndRows = (container, plateNumber, col, row) => {
 
         container.append(rowLetter);
         //create 12 wells per 'row' 
-        for (let i = 1; i < columns.length; i++) {
+        for (let i = 1; i < col.length; i++) {
             var well = $('<button>');
             well.addClass(row + ' well _' + columns[i]);
             well.attr('id', row + i + 'P' + plateNumber);
             well.text(row + i);
             container.append(well);
-            console.log(i);
         }
     });
 }
-
 //
 let cutArrayTo96 = (is384) => {
     //if not a 384 plate, cut the array down to represent a 96well plate 
     if (is384 === false) {
         var slicedCol = columns.slice(0, 13);
         var slicedRows = rows.slice(0, 8);
-        return {slicedCol, slicedRows};
+        return [slicedCol, slicedRows];
+    }
+    else {
+        return [columns, rows];
     }
 }
-
-// console.log(cutArrayTo96(false));
-
 //funciton that dynamically creates a 96well plate
 let generatePlate = (is384, plateNumber) => {
     // generate plate area divs
@@ -157,97 +140,43 @@ let generatePlate = (is384, plateNumber) => {
     plateview.append(plate);
     plate.append(container);
 
-    // cutArrayTo96(is384);
-    if (is384 === false) {
-        columns = columns.slice(0, 13);
-        rows = rows.slice(0, 8);
-        // return {slicedCol, slicedRows};
-    }
+    const [c, r] = cutArrayTo96(is384);
 
-    columnsAndRows(container, plateNumber, columns, rows);
+    columnsAndRows(container, plateNumber, c, r);
 }
-
 //function to generate the 4 subsequent plates associated with the 384
 //iterate through 1 to 4
 let generate96WellPlates = () => {
     //cut the array down to represent a 96well plate
-    var newColumns = columns;
-    var slicedCol = newColumns.slice(0, 13)
-    var newRows = rows;
-    var slicedRows = newRows.slice(0, 8);
-
-    // const {slicedCol, slicedRows} = cutArrayTo96(false);
-    // console.log(slicedCol)
-
+    const [slicedCol, slicedRows] = cutArrayTo96(false);
     //generate plate area divs
     //go through each div with class name plate1 to plate4
     for (let i = 1; i < 5; i++) {
+
         var viewport = $('<div id="custom-view">');
         var plateview = $('<div class="plateview">');
         var plate = $('<div class="plate">');
         var container = $('<div class="container item" id="plate-area">');
 
-        columnsAndRows(container, 1, slicedCol,slicedRows);
         $(`.plate${i}`).append(viewport);
 
-        
-        // //generate the column labels
-        // slicedCol.forEach(col => {
-        //     //create a new div element 
-        //     var newDiv = $('<div>');
-        //     newDiv.addClass('label');
-        //     //add column identifier 
-        //     newDiv.addClass('_' + col);
-        //     //set column 00 to blank as the space is needed for formatting 
-        //     if (col == '00') {
-        //         newDiv.text('');
-        //     }
-        //     else {
-        //         newDiv.text(col);
-        //     }
-
-        //     $(container).append(newDiv);
-        // });
-
-        // //generate the rows
-        // slicedRows.forEach(row => {
-        //     //row header 
-        //     var rowLetter = $('<div>');
-        //     rowLetter.addClass('label a');
-        //     rowLetter.text(row);
-
-        //     $(container).append(rowLetter);
-
-        //     //create 12 wells per 'row' 
-        //     for (let i = 1; i < slicedCol.length; i++) {
-        //         var well = $('<button>');
-        //         well.addClass(row + ' well _' + columns[i]);
-        //         // well.attr('id', row + i + 'P' + plateNumber);
-        //         well.text(row + i);
-        //         $(container).append(well);
-        //     }
-        // });
+        columnsAndRows(container, null, slicedCol, slicedRows);
 
         viewport.append(plateview);
         plateview.append(plate);
         plate.append(container);
-        
     }
 }
-
 //called in the callback function after the file is parsed 
 //Rounding up the ammount of well to to fill
 //Assume the user will fill each well 60uL 
 let createSolutionPlate = (is384, solutionsObject, totalNumberOfPlates) => {
     // generatePlate(is384, totalNumberOfPlates + 1);
     generatePlate(is384, totalNumberOfPlates + 1);
-
     //An array of the amounts of solutions
     var solutionAmounts = Object.values(solutionsObject);
-
     //An array containging the solution names 
     var solutionNames = Object.keys(solutionsObject);
-
     //An array that will contain the number of wells to fill per solution
     var numberOfWellsToFillPerSolution = []
 
@@ -256,11 +185,6 @@ let createSolutionPlate = (is384, solutionsObject, totalNumberOfPlates) => {
         var amount = Math.ceil(e / 60);
         numberOfWellsToFillPerSolution.push(amount);
     });
-
-    ///////////************ */
-    var testArray = [6, 27, 11];
-    //////////************* */
-
     //used to eventually generate the source wells for the final echo worklist csv
     var solutionSourceWells = [];
     // console.log(numberOfWellsToFillPerSolution);
@@ -270,7 +194,7 @@ let createSolutionPlate = (is384, solutionsObject, totalNumberOfPlates) => {
     //number of wells to fill per solution 
     //in this case this should output an array contianing 3 elements since it is outside of this 1st loop
     //iterate through the number of wells to fill per solution
-    for (let i = 0; i < testArray.length; i++) {
+    for (let i = 0; i < numberOfWellsToFillPerSolution.length; i++) {
         //the 1st well in the row 
         var wellNumber = 1;
         //variable to hold the current letter 
@@ -282,7 +206,7 @@ let createSolutionPlate = (is384, solutionsObject, totalNumberOfPlates) => {
 
         var tempArrToHoldSolutionSourceWells = [];
         //iterate through each well number until the number of wells to fill has been met 
-        for (let j = 0; j < testArray[i]; j++) {
+        for (let j = 0; j < numberOfWellsToFillPerSolution[i]; j++) {
             //store the solution/well
             solutionWells.push([currentSolution, (currentWellLetter + wellNumber), currentColor]);
             tempArrToHoldSolutionSourceWells.push(currentWellLetter + wellNumber);
@@ -298,13 +222,14 @@ let createSolutionPlate = (is384, solutionsObject, totalNumberOfPlates) => {
         }
         solutionSourceWells.push(tempArrToHoldSolutionSourceWells);
     }
-    //send this to a formating function 
-    console.log(solutionSourceWells);
-    sourceSolutionFormatting(solutionSourceWells);
-
+    // console.log(solutionSourceWells);
+    //format solution source wells for the echo worklist 
+    solutionSourceWells.forEach(e => {
+        solutionSourceWellsForEchoWorkList.push(sourceSolutionFormatting(e));
+    });
+    console.log(solutionSourceWellsForEchoWorkList);
     highlightSolutionPlate(solutionWells, totalNumberOfPlates + 1);
 }
-
 //write a function that takes in an array 
 //example array: ["A1", "A1", "Plate 1", "500", "Water", "250", "RebA", "500", "Mg"]
 //example output:
@@ -318,10 +243,8 @@ let formatArrayIntoLines = (arr) => {
     let currentWell = arr[0];
     //iterate through the incoming array 
     for (let i = 3; i <= 7; i += 2) {
-
         //grab the solution/amount pair
         var slicedArr = arr.slice(i, i + 2);
-
         //eliminate wells given a volume of 0
         if (slicedArr[0] !== '0') {
             //to store the 'example output'
@@ -337,72 +260,13 @@ let formatArrayIntoLines = (arr) => {
     }
 }
 
-//this function will format the solution source wells array
-//into a format like {A1:A24},{B1:B3}
-let sourceSolutionFormatting = (solutionSourceWells) => {
-    let formatted = [];
-    solutionSourceWells.forEach(e => {
-        var tempArr = e;
-        var start = tempArr[0];
-        //(1) B1
-
-        var end = [];
-
-        if (tempArr.length < 24) {
-            end = tempArr[tempArr.length - 1];
-            formatted.push([start, end]);
-        }
-        else {
-            end = tempArr[23];
-            formatted.push([start, end]);
-            tempArr = tempArr.slice(24);
-        }
-        console.log(tempArr);
-
-        //27
-        //%24 = 1
-        // var remainder = e.lenght % 24;
-
-        //
-
-        // while(remainder > 0){
-        //     //the 24th well
-        //     end = tempArr[23];
-
-        //     formatted.push([start,end]);
-
-        //     tempArr = tempArr.slice(24);
-
-        //     start = tempArr[0];
-
-        //     remainder--;
-        // }
-        // end = tempArr[tempArr.length-1];
-        // formatted.push([start,end]);
-
-
-        //1st while --> B1:B24 (r=0)
-        //2nd while (loop breaks to below) --> C1:C3 (r=0)
-        /////3rd (loop breaks to below) --> should output C1:C2
-
-    });
-    console.log(formatted);
-
-}
-
-var exampleArray = ["B1", "B2", "B3", "B4", "B5", "B6", "B7", "B8", "B9", "B10", "B11", "B12", "B13", "B14", "B15", "B16", "B17", "B18", "B19", "B20", "B21", "B22", "B23", "B24", "C1", "C2", "C3", "C4", "C5", "C6", "C7", "C8", "C9", "C10", "C11", "C12", "C13", "C14", "C15", "C16", "C17", "C18", "C19", "C20", "C21", "C22", "C23", "C24", "D1", "D2", "D3", "D4", "D5"];
-let testRecursion = (arr) => {
-    // let testArr = []
+var exampleArray = [["B1", "B2", "B3", "B4", "B5", "B6", "B7", "B8", "B9", "B10", "B11", "B12", "B13", "B14", "B15", "B16", "B17", "B18", "B19", "B20", "B21", "B22", "B23", "B24", "C1", "C2", "C3", "C4", "C5", "C6", "C7", "C8", "C9", "C10", "C11", "C12", "C13", "C14", "C15", "C16", "C17", "C18", "C19", "C20", "C21", "C22", "C23", "C24", "D1", "D2", "D3", "D4", "D5"], ["E1", "E2", "E3", "E4", "E5", "E6", "E7", "E8", "E9", "E10", "E11", "E12", "E13", "E14", "E15", "E16", "E17", "E18", "E19", "E20", "E21", "E22", "E23", "E24", "F1", "F2", "F3", "F4", "F5", "F6", "F7", "F8", "F9", "F10", "F11", "F12", "F13"]];
+let sourceSolutionFormatting = (arr) => {
     //if the legnth of the array is 24 or less, return the 1st and last index of that array
-    if (arr.length < 25) return `[${arr[0]},${arr[arr.length - 1]}]`;
-    // return ([arr[0], arr[23]])+','+ testRecursion(arr = arr.slice(24));
+    if (arr.length < 25) return `{${arr[0]}:${arr[arr.length - 1]}}`;
 
-    return `[${arr[0]},${arr[23]}],${testRecursion(arr = arr.slice(24))}`
-
-
+    return `{${arr[0]}:${arr[23]}},${sourceSolutionFormatting(arr = arr.slice(24))}`
 }
-
-console.log(testRecursion(exampleArray));
 /*=====  End of Functions  ======*/
 
 
@@ -472,15 +336,12 @@ let completeFn = (results) => {
         solutionNameCount++;
     }
     createSolutionPlate(is384, totalSolution, numberOfPlatesToGenerate);
-    // console.log(partialNewLineForEchoWorklist);
+    console.log(partialNewLineForEchoWorklist);
 }
 
 /*=====  End of CSV parsing/recreation  ======*/
 
 $(document).ready(() => {
-    // console.log('--------------------------');
-    // console.log(csv3);
-
     //toggle the color of the button when clicked 
     $('.well').click((e) => {
         e.preventDefault();
